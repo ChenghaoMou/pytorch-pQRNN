@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 import bz2
+from itertools import tee
 
 import numpy as np
 import pandas as pd
@@ -42,31 +43,35 @@ class DummyDataset(IterableDataset):
         self.bos_tag = ["BOS"] if add_bos_tag else []
 
     def __iter__(self):
-        for line in self.x:
-            line = line.decode("utf-8")
-            if self.has_label and self.label2index:
-                label, line = line.split(" ", 1)
-                label = self.label2index[label]
-            else:
-                label = None
+        corpus = bz2.BZ2File(self.x)
+        for line in corpus:
+            try:
+                line = line.decode("utf-8")
+                if self.has_label and self.label2index:
+                    label, line = line.split(" ", 1)
+                    label = self.label2index[label]
+                else:
+                    label = None
 
-            tokens = (
-                REGEX1.sub(" ", REGEX0.sub(r" \1 ", line.lower()))
-                .strip()
-                .split(" ")
-            )
+                tokens = (
+                    REGEX1.sub(" ", REGEX0.sub(r" \1 ", line.lower()))
+                    .strip()
+                    .split(" ")
+                )
 
-            curr_tokens = (
-                self.bos_tag + tokens[: self.max_seq_len] + self.eos_tag
-            )
-            curr_hashings = []
-            for j in range(len(curr_tokens)):
-                curr_hashing = murmurhash(curr_tokens[j])
-                curr_hashings.append(curr_hashing[: self.feature_size])
-            if label is not None:
-                yield curr_hashings, label
-            else:
-                yield curr_hashings
+                curr_tokens = (
+                    self.bos_tag + tokens[: self.max_seq_len] + self.eos_tag
+                )
+                curr_hashings = []
+                for j in range(len(curr_tokens)):
+                    curr_hashing = murmurhash(curr_tokens[j])
+                    curr_hashings.append(curr_hashing[: self.feature_size])
+                if label is not None:
+                    yield curr_hashings, label
+                else:
+                    yield curr_hashings
+            except:
+                continue
 
 
 def collate_fn(examples):
@@ -105,9 +110,8 @@ def create_dataloaders(
     label2index: Dict[str, int] = None,
 ):
 
-    train_data = bz2.BZ2File(train_path)
     train_dataset = DummyDataset(
-        train_data,
+        train_path,
         feature_size=feature_size,
         add_eos_tag=add_eos_tag,
         add_bos_tag=add_bos_tag,
@@ -115,9 +119,8 @@ def create_dataloaders(
         label2index=label2index,
     )
 
-    val_data = bz2.BZ2File(val_path)
     val_dataset = DummyDataset(
-        val_data,
+        val_path,
         feature_size=feature_size,
         add_eos_tag=add_eos_tag,
         add_bos_tag=add_bos_tag,
