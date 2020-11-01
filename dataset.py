@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 import regex as re
 import torch
+from datasets import load_dataset
 from rich.console import Console
-from torch.utils.data import DataLoader, IterableDataset
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from utils import murmurhash
 
@@ -18,7 +19,7 @@ REGEX1 = re.compile(r" +")
 console = Console()
 
 
-class DummyDataset(IterableDataset):
+class DummyDataset(Dataset):
     def __init__(
         self,
         x,
@@ -42,36 +43,34 @@ class DummyDataset(IterableDataset):
         self.eos_tag = ["EOS"] if add_eos_tag else []
         self.bos_tag = ["BOS"] if add_bos_tag else []
 
-    def __iter__(self):
-        corpus = bz2.BZ2File(self.x)
-        for line in corpus:
-            try:
-                line = line.decode("utf-8")
-                if self.has_label and self.label2index:
-                    label, line = line.split(" ", 1)
-                    label = self.label2index[label]
-                else:
-                    label = None
+    def __len__(self):
+        return len(self.x)
 
-                tokens = (
-                    REGEX1.sub(" ", REGEX0.sub(r" \1 ", line.lower()))
-                    .strip()
-                    .split(" ")
-                )
+    def __getitem__(self, idx):
+        line = self.x[idx]
+        text = line["text"]
+        if self.has_label:
+            label = line["label"]
+            if self.label2index:
+                label = self.label2index[label]
+        else:
+            label = None
 
-                curr_tokens = (
-                    self.bos_tag + tokens[: self.max_seq_len] + self.eos_tag
-                )
-                curr_hashings = []
-                for j in range(len(curr_tokens)):
-                    curr_hashing = murmurhash(curr_tokens[j])
-                    curr_hashings.append(curr_hashing[: self.feature_size])
-                if label is not None:
-                    yield curr_hashings, label
-                else:
-                    yield curr_hashings
-            except:
-                continue
+        tokens = (
+            REGEX1.sub(" ", REGEX0.sub(r" \1 ", text.lower()))
+            .strip()
+            .split(" ")
+        )
+
+        curr_tokens = self.bos_tag + tokens[: self.max_seq_len] + self.eos_tag
+        curr_hashings = []
+        for j in range(len(curr_tokens)):
+            curr_hashing = murmurhash(curr_tokens[j])
+            curr_hashings.append(curr_hashing[: self.feature_size])
+        if label is not None:
+            return curr_hashings, label
+        else:
+            return curr_hashings
 
 
 def collate_fn(examples):
@@ -99,10 +98,8 @@ def collate_fn(examples):
 
 
 def create_dataloaders(
-    train_path: str = "train.csv",
-    val_path: str = "test.csv",
+    task: str = "yelp",
     batch_size: int = 32,
-    train_size: float = 0.8,
     feature_size: int = 128,
     add_eos_tag: bool = True,
     add_bos_tag: bool = True,
@@ -110,8 +107,13 @@ def create_dataloaders(
     label2index: Dict[str, int] = None,
 ):
 
+    if task == "yelp":
+        dataset = load_dataset("yelp_polarity")
+    else:
+        raise Exception(f"Unsupported task: {task} VS. yelp")
+
     train_dataset = DummyDataset(
-        train_path,
+        dataset["train"],
         feature_size=feature_size,
         add_eos_tag=add_eos_tag,
         add_bos_tag=add_bos_tag,
@@ -120,7 +122,7 @@ def create_dataloaders(
     )
 
     val_dataset = DummyDataset(
-        val_path,
+        dataset["test"],
         feature_size=feature_size,
         add_eos_tag=add_eos_tag,
         add_bos_tag=add_bos_tag,
@@ -133,12 +135,12 @@ def create_dataloaders(
             train_dataset,
             batch_size=batch_size,
             collate_fn=collate_fn,
-            num_workers=1,
+            num_workers=4,
         ),
         DataLoader(
             val_dataset,
             batch_size=batch_size,
             collate_fn=collate_fn,
-            num_workers=1,
+            num_workers=4,
         ),
     )

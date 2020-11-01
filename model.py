@@ -39,7 +39,7 @@ class PRADO(pl.LightningModule):
         heads: List[int] = None,
         fc_sizes: List[int] = None,
         output_size: int = 2,
-        lr: float = 2e-4,
+        lr: float = 0.025,
         dropout: float = 0.5,
     ):
         super().__init__()
