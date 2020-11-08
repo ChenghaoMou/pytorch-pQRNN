@@ -1,5 +1,5 @@
 # pytorch-prado
-Pytorch Implementation of Prado, and pQRNN (WIP)
+Pytorch Implementation of Prado, and pQRNN
 
 ## Environment
 
@@ -7,22 +7,24 @@ Pytorch Implementation of Prado, and pQRNN (WIP)
 pip install -r requirements.txt
 ```
 
-It's recommended to install [apex](https://github.com/NVIDIA/apex) as well. Otherwise, you should turn off half precision in `run.py` first
+## Note
+
+- If you want to use pQRNN, please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn`
+- It's recommended to install [apex](https://github.com/NVIDIA/apex) as well. Otherwise, you should turn off half precision in `run.py` first
 
 ## Usage 
 
 Currently, `run.py` only supports training.
 
 ```bash
-~/pytorch-prado$ python run.py --help
 Usage: run.py [OPTIONS]
 
 Options:
-  --train-path TEXT     [default: train.ft.txt.bz2]
-  --val-path TEXT       [default: test.ft.txt.bz2]
-  --b INTEGER           [default: 128]
+  --task TEXT           [default: yelp]
+  --b INTEGER           [default: 512]
   --d INTEGER           [default: 96]
-  --batch-size INTEGER  [default: 128]
+  --batch-size INTEGER  [default: 64]
+  --lr FLOAT            [default: 0.001]
   --install-completion  Install completion for the current shell.
   --show-completion     Show completion for the current shell, to copy it or
                         customize the installation.
@@ -30,9 +32,17 @@ Options:
   --help                Show this message and exit.
 ```
 
-I am working on benchmarking and also implementing pQRNN. Stay tuned!
+### Yelp
+```
+python -W ignore run.py --task yelp --b 128 --d 64
+```
 
-Thanks
+## Benchmarks(not optimized)
+
+| Model             	| Model Size 	| Yelp (error rate) 	      |
+|-------------------	|------------	|--------------------------	|
+| PQRNN (this repo) 	| 53K        	| 8.4                     	|
+| BERT large        	| 335M       	| 1.81                     	|
 
 ## Credits
 

@@ -130,3 +130,5 @@ dmypy.json
 
 *logs
 *bz2
+
+.vscode

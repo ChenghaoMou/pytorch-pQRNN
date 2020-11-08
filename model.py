@@ -8,7 +8,12 @@ with warnings.catch_warnings():
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    from pytorch_lightning.metrics.functional.classification import f1_score
+    from pytorch_lightning.metrics.functional.classification import (
+        accuracy,
+        f1_score,
+    )
+    from torchqrnn import QRNN
+
 
 _NGRAM_INFO = [
     {"name": "unigram", "padding": 0, "kernel_size": [1, 1], "mask": None},
@@ -35,7 +40,7 @@ class PRADO(pl.LightningModule):
     def __init__(
         self,
         B: int = 512,
-        d: int = 96,
+        d: int = 64,
         heads: List[int] = None,
         fc_sizes: List[int] = None,
         output_size: int = 2,
@@ -90,7 +95,6 @@ class PRADO(pl.LightningModule):
     def forward(self, projection, seq_lengths):
         features = self.tanh(projection)
         batch_size, max_seq_len, _ = features.shape
-
         values, keys = (
             self.dropout(self.relu(self.linear_key(features))),
             self.dropout(self.relu(self.linear_value(features))),
@@ -174,6 +178,95 @@ class PRADO(pl.LightningModule):
             .detach()
             .cpu()
             .item(),
+            prog_bar=True,
+        )
+        self.log(
+            "val_acc",
+            accuracy(torch.argmax(logits, dim=1), labels).detach().cpu().item(),
+            prog_bar=True,
+        )
+        self.log(
+            "val_loss",
+            self.loss(logits, labels).detach().cpu().item(),
+            prog_bar=True,
+        )
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        return optimizer
+
+
+class PQRNN(pl.LightningModule):
+    def __init__(
+        self,
+        B: int = 512,
+        d: int = 64,
+        fc_sizes: List[int] = None,
+        output_size: int = 2,
+        lr: float = 0.025,
+        dropout: float = 0.5,
+    ):
+        super().__init__()
+        if fc_sizes is None:
+            fc_sizes = [128, 64]  # no original default values
+
+        self.B = B
+        self.d = d
+        self.fc_sizes = fc_sizes
+        self.lr = lr
+        self.dropout = dropout
+        self.output_size = output_size
+        self.tanh = nn.Hardtanh()
+
+        self.qrnn = QRNN(B, d, num_layers=2, dropout=dropout)
+        layers = []
+        for x, y in zip([d] + fc_sizes[:-1], fc_sizes):
+            layers.append(nn.Linear(x, y))
+            layers.append(nn.ReLU())
+
+        layers.append(nn.Linear(fc_sizes[-1], output_size))
+        self.output = nn.ModuleList(layers)
+        self.loss = nn.CrossEntropyLoss()
+
+    def forward(self, projection, seq_lengths):
+        features = self.tanh(projection)
+        features = features.transpose(0, 1)
+        output, _ = self.qrnn(features)
+        output = output.transpose(0, 1)
+        logits = torch.mean(output, dim=1)
+        for layer in self.output:
+            logits = layer(logits)
+        return logits
+
+    def training_step(self, batch, batch_idx):
+        projection, seq_lengths, labels = batch
+        logits = self.forward(projection, seq_lengths)
+        self.log("loss", self.loss(logits, labels).detach().cpu().item())
+        return {"loss": self.loss(logits, labels)}
+
+    def validation_step(self, batch, batch_idx):
+        projection, seq_lengths, labels = batch
+        logits = self.forward(projection, seq_lengths)
+
+        return {"logits": logits, "labels": labels}
+
+    def validation_epoch_end(self, outputs):
+
+        logits = torch.cat([o["logits"] for o in outputs], dim=0)
+        labels = torch.cat([o["labels"] for o in outputs], dim=0)
+        self.log(
+            "val_f1",
+            f1_score(
+                torch.argmax(logits, dim=1), labels, class_reduction="macro"
+            )
+            .detach()
+            .cpu()
+            .item(),
+            prog_bar=True,
+        )
+        self.log(
+            "val_acc",
+            accuracy(torch.argmax(logits, dim=1), labels).detach().cpu().item(),
             prog_bar=True,
         )
         self.log(

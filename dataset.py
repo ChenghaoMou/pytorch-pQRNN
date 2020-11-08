@@ -24,7 +24,7 @@ class DummyDataset(Dataset):
         self,
         x,
         has_label: bool = True,
-        feature_size: int = 128,
+        feature_size: int = 512,
         add_eos_tag: bool = True,
         add_bos_tag: bool = True,
         max_seq_len: int = 256,
@@ -65,8 +65,10 @@ class DummyDataset(Dataset):
         curr_tokens = self.bos_tag + tokens[: self.max_seq_len] + self.eos_tag
         curr_hashings = []
         for j in range(len(curr_tokens)):
-            curr_hashing = murmurhash(curr_tokens[j])
-            curr_hashings.append(curr_hashing[: self.feature_size])
+            curr_hashing = murmurhash(
+                curr_tokens[j], feature_size=self.feature_size
+            )
+            curr_hashings.append(curr_hashing[: self.feature_size // 2])
         if label is not None:
             return curr_hashings, label
         else:

@@ -43,6 +43,6 @@ def murmurhash(token: str, feature_size: int = 512):
                 break
             projection.append(kMappingTable[code & 3])
             code = code >> 2
-        if len(projection) >= feature_size:
+        if len(projection) >= feature_size // 2:
             break
-    return projection
+    return projection[: feature_size // 2]
