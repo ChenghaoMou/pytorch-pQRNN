@@ -108,7 +108,6 @@ def create_dataloaders(
     max_seq_len: int = 256,
     label2index: Dict[str, int] = None,
 ):
-
     if task == "yelp":
         dataset = load_dataset("yelp_polarity")
     else:

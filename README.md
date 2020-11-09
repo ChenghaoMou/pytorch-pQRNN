@@ -1,20 +1,15 @@
-# pytorch-prado
-Pytorch Implementation of Prado, and pQRNN
+# pytorch-pQRNN
+Pytorch Implementation of pQRNN.
 
 ## Environment
+
+Please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn`.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Note
-
-- If you want to use pQRNN, please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn`
-- It's recommended to install [apex](https://github.com/NVIDIA/apex) as well. Otherwise, you should turn off half precision in `run.py` first
-
 ## Usage 
-
-Currently, `run.py` only supports training.
 
 ```bash
 Usage: run.py [OPTIONS]
@@ -32,7 +27,7 @@ Options:
   --help                Show this message and exit.
 ```
 
-### Yelp
+### Example: Yelp Polarity
 ```
 python -W ignore run.py --task yelp --b 128 --d 64
 ```
@@ -41,7 +36,7 @@ python -W ignore run.py --task yelp --b 128 --d 64
 
 | Model             	| Model Size 	| Yelp (error rate) 	      |
 |-------------------	|------------	|--------------------------	|
-| PQRNN (this repo) 	| 53K        	| 8.4                     	|
+| PQRNN (this repo) 	| 77K        	| 7.0                     	|
 | BERT large        	| 335M       	| 1.81                     	|
 
 ## Credits

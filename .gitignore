@@ -132,3 +132,4 @@ dmypy.json
 *bz2
 
 .vscode
+*ckpt
