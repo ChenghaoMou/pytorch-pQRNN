@@ -200,6 +200,7 @@ class PQRNN(pl.LightningModule):
         self,
         b: int = 512,
         d: int = 64,
+        num_layers: int = 4,
         fc_sizes: List[int] = None,
         output_size: int = 2,
         lr: float = 0.025,
@@ -224,7 +225,7 @@ class PQRNN(pl.LightningModule):
             layers.append(nn.Linear(x, y))
 
         self.tanh = nn.Hardtanh()
-        self.qrnn = QRNN(b, d, num_layers=2, dropout=dropout)
+        self.qrnn = QRNN(b, d, num_layers=num_layers, dropout=dropout)
         self.output = nn.ModuleList(layers)
         self.loss = nn.CrossEntropyLoss()
 
