@@ -9,6 +9,7 @@ import regex as re
 import torch
 from datasets import load_dataset
 from rich.console import Console
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from utils import murmurhash
@@ -110,6 +111,16 @@ def create_dataloaders(
 ):
     if task == "yelp":
         dataset = load_dataset("yelp_polarity")
+    elif task == "yelp-5":
+        data = pd.read_json("data/yelp_reviews.json", lines=True)
+        data["label"] = data["stars"] - 1
+        train, val = train_test_split(
+            data, test_size=0.1, stratify=data["label"]
+        )
+        dataset = {
+            "train": train.to_dict("records"),
+            "test": val.to_dict("records"),
+        }
     else:
         raise Exception(f"Unsupported task: {task} VS. yelp")
 

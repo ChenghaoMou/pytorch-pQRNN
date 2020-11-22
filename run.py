@@ -23,7 +23,7 @@ def train(
     task: str = typer.Option(
         "yelp",
         allow_dash=True,
-        help="Task to train the model with, currently support `yelp`(yelp polarity) task",
+        help="Task to train the model with, currently support `yelp`(yelp polarity) and `yelp-5` tasks",
     ),
     model_type: str = typer.Option(
         "pQRNN",
@@ -50,8 +50,15 @@ def train(
         feature_size=b * 2,
         label2index=None,
     )
-
-    model = PQRNN(b=b, d=d, lr=lr, num_layers=num_layers, dropout=dropout)
+    num_classes = 2 if task == "yelp" else 5 if task == "yelp-5" else 2
+    model = PQRNN(
+        b=b,
+        d=d,
+        lr=lr,
+        num_layers=num_layers,
+        dropout=dropout,
+        output_size=num_classes,
+    )
 
     trainer = pl.Trainer(
         logger=pl_loggers.TensorBoardLogger("lightning_logs", log_graph=False),
