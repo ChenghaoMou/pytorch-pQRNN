@@ -29,19 +29,19 @@ Options:
 
 Datasets
 
--   yelp(polarity): it will be downloaded w/ datasets(huggingface)
--   yelp-5: [json file](https://www.kaggle.com/luisfredgs/hahnn-for-document-classification?select=yelp_reviews.json) should be downloaded to into `data/`
+-   yelp2(polarity): it will be downloaded w/ datasets(huggingface)
+-   yelp5: [json file](https://www.kaggle.com/luisfredgs/hahnn-for-document-classification?select=yelp_reviews.json) should be downloaded to into `data/`
 
 ### Example: Yelp Polarity
 
-    python -W ignore run.py --task yelp --b 128 --d 64 --num-layers 4
+    python -W ignore run.py --task yelp2 --b 128 --d 64 --num-layers 4
 
 ## Benchmarks(not optimized)
 
 | Model                                                         | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) |                    Command                    |
 | ------------------------------------------------------------- | :--------: | :------------------------: | :---------------: | :-------------------------------------------: |
 | PQRNN (this repo)                                             |     78K    |             6.3            |       70.4\*      | --b 128 --d 64 --num-layers 4 --rnn_type QRNN |
-| PRNN (this repo)                                              |     90K    |            TODO            |        TODO       |  --b 128 --d 64 --num_layers 1 --rnn_type GRU |
+| PRNN (this repo)                                              |     90K    |             5.5            |        TODO       |  --b 128 --d 64 --num_layers 1 --rnn_type GRU |
 | PTransformer (this repo)                                      |    TODO    |            TODO            |        TODO       |                                               |
 | PRADO([paper](https://www.aclweb.org/anthology/D19-1506.pdf)) |    175K    |                            |        65.9       |                                               |
 | BERT                                                          |    335M    |            1.81            |       70.58       |                                               |
