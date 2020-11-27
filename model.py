@@ -1,39 +1,41 @@
 from typing import List
 
 import warnings
+from functools import partial
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import pytorch_lightning as pl
     import torch
     import torch.nn as nn
-    import torch.nn.functional as F
-    from pytorch_lightning.metrics.functional.classification import (
-        accuracy,
-        f1_score,
-    )
+    from pytorch_lightning.metrics.functional import f1 as f1_score
+    from pytorch_lightning.metrics.functional.classification import accuracy
     from torch.optim.lr_scheduler import ReduceLROnPlateau
-    from torchqrnn import QRNN
 
-_NGRAM_INFO = [
-    {"name": "unigram", "padding": 0, "kernel_size": [1, 1], "mask": None},
-    {"name": "bigram", "padding": 1, "kernel_size": [2, 1], "mask": None},
-    {"name": "trigram", "padding": 2, "kernel_size": [3, 1], "mask": None},
-    {
-        "name": "bigramskip1",
-        "padding": 2,
-        "kernel_size": [3, 1],
-        "mask": [[[[1]]], [[[0]]], [[[1]]]],
-    },
-    {
-        "name": "bigramskip2",
-        "padding": 3,
-        "kernel_size": [4, 1],
-        "mask": [[[[1]]], [[[0]]], [[[0]]], [[[1]]]],
-    },
-    {"name": "fourgram", "padding": 3, "kernel_size": [4, 1], "mask": None},
-    {"name": "fivegram", "padding": 4, "kernel_size": [5, 1], "mask": None},
-]
+    try:
+        from torchqrnn import QRNN
+    except ImportError:
+        from torch.nn import LSTM as QRNN
+
+# _NGRAM_INFO = [
+#     {"name": "unigram", "padding": 0, "kernel_size": [1, 1], "mask": None},
+#     {"name": "bigram", "padding": 1, "kernel_size": [2, 1], "mask": None},
+#     {"name": "trigram", "padding": 2, "kernel_size": [3, 1], "mask": None},
+#     {
+#         "name": "bigramskip1",
+#         "padding": 2,
+#         "kernel_size": [3, 1],
+#         "mask": [[[[1]]], [[[0]]], [[[1]]]],
+#     },
+#     {
+#         "name": "bigramskip2",
+#         "padding": 3,
+#         "kernel_size": [4, 1],
+#         "mask": [[[[1]]], [[[0]]], [[[0]]], [[[1]]]],
+#     },
+#     {"name": "fourgram", "padding": 3, "kernel_size": [4, 1], "mask": None},
+#     {"name": "fivegram", "padding": 4, "kernel_size": [5, 1], "mask": None},
+# ]
 
 
 # class PRADO(pl.LightningModule):
@@ -205,6 +207,7 @@ class PQRNN(pl.LightningModule):
         output_size: int = 2,
         lr: float = 0.025,
         dropout: float = 0.5,
+        rnn_type: str = "LSTM",
     ):
         super().__init__()
         if fc_sizes is None:
@@ -217,6 +220,7 @@ class PQRNN(pl.LightningModule):
             "lr": lr,
             "output_size": output_size,
             "dropout": dropout,
+            "rnn_type": rnn_type.upper(),
         }
 
         layers: List[nn.Module] = []
@@ -225,7 +229,13 @@ class PQRNN(pl.LightningModule):
             layers.append(nn.Linear(x, y))
 
         self.tanh = nn.Hardtanh()
-        self.qrnn = QRNN(b, d, num_layers=num_layers, dropout=dropout)
+        self.qrnn = {
+            "LSTM": partial(nn.LSTM, bidirectional=True),
+            "GRU": partial(nn.GRU, bidirectional=True),
+            "QRNN": QRNN,
+        }[self.hparams["rnn_type"]](
+            b, d, num_layers=num_layers, dropout=dropout
+        )
         self.output = nn.ModuleList(layers)
         self.loss = nn.CrossEntropyLoss()
 
@@ -234,6 +244,11 @@ class PQRNN(pl.LightningModule):
         features = features.transpose(0, 1)
         output, _ = self.qrnn(features)
         output = output.transpose(0, 1)
+        if self.hparams["rnn_type"] != "QRNN":
+            output = (
+                output[..., : output.shape[-1] // 2]
+                + output[..., output.shape[-1] // 2 :]
+            )
         logits = torch.mean(output, dim=1)
         for layer in self.output:
             logits = layer(logits)
@@ -258,7 +273,10 @@ class PQRNN(pl.LightningModule):
         self.log(
             "val_f1",
             f1_score(
-                torch.argmax(logits, dim=1), labels, class_reduction="macro"
+                torch.argmax(logits, dim=1),
+                labels,
+                num_classes=self.hparams["output_size"],
+                average="macro",
             )
             .detach()
             .cpu()

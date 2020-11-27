@@ -1,7 +1,4 @@
-from typing import Dict, List
-
-import bz2
-from itertools import tee
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -11,7 +8,6 @@ from datasets import load_dataset
 from rich.console import Console
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
 from utils import murmurhash
 
 REGEX0 = re.compile(r"([\p{S}\p{P}]+)")
@@ -23,7 +19,7 @@ console = Console()
 class DummyDataset(Dataset):
     def __init__(
         self,
-        x,
+        x: Union[pd.DataFrame, List[Dict[str, Any]]],
         has_label: bool = True,
         feature_size: int = 512,
         add_eos_tag: bool = True,
@@ -31,6 +27,33 @@ class DummyDataset(Dataset):
         max_seq_len: int = 256,
         label2index: Dict[str, int] = None,
     ):
+        """Convert the dataset into a dummy torch dataset.
+
+        Parameters
+        ----------
+        x : Union[pd.DataFrame, List[Dict[str, Any]]]
+            A dataframe or a list of dicts
+        has_label : bool, optional
+            Whether the dataframe or each dict has a label key/column, by default True
+        feature_size : int, optional
+            Dimension of the hash, the output dimension would be half of the hash size(2b -> b), by default 512
+        add_eos_tag : bool, optional
+            Add a special eos tag, by default True
+        add_bos_tag : bool, optional
+            Add a special bos tag, by default True
+        max_seq_len : int, optional
+            Maximum sequence length, by default 256
+        label2index : Dict[str, int], optional
+            Mapping that converts labels into indices, by default None
+
+        Examples
+        --------
+        >>> data = [{'text': 'Hello world!', 'label': 'positive'}]
+        >>> dataset = DummyDataset(data, has_label=True, feature_size=512, label2index={'positive': 1, 'negative': 0})
+        >>> hash, label = dataset[0]
+        >>> assert label == 1, label
+        >>> assert len(hash[0]) == 256, len(hash[0])
+        """
         self.feature_size = feature_size
         self.add_eos_tag = add_eos_tag
         self.add_bos_tag = add_bos_tag
@@ -76,7 +99,20 @@ class DummyDataset(Dataset):
             return curr_hashings
 
 
-def collate_fn(examples):
+def collate_fn(examples: List[Any]) -> Tuple[torch.Tensor, ...]:
+    """Batching examples.
+
+    Parameters
+    ----------
+    examples : List[Any]
+        List of examples
+
+    Returns
+    -------
+    Tuple[torch.Tensor, ...]
+        Tuple of hash tensor, length tensor, and label tensor
+    """
+
     projection = []
     labels = []
 
@@ -101,17 +137,46 @@ def collate_fn(examples):
 
 
 def create_dataloaders(
-    task: str = "yelp",
+    task: str = "yelp2",
     batch_size: int = 32,
     feature_size: int = 128,
     add_eos_tag: bool = True,
     add_bos_tag: bool = True,
     max_seq_len: int = 256,
     label2index: Dict[str, int] = None,
-):
-    if task == "yelp":
+) -> Tuple[DataLoader, DataLoader]:
+    """Create train and eval dataloaders.
+
+    Parameters
+    ----------
+    task : str, optional
+        Name from predefined tasks, by default "yelp2"
+    batch_size : int, optional
+        Size of the batch, by default 32
+    feature_size : int, optional
+        Dimension of the features, by default 128
+    add_eos_tag : bool, optional
+        Add a special eos tag, by default True
+    add_bos_tag : bool, optional
+        Add a special bos tag, by default True
+    max_seq_len : int, optional
+        Maximum sequence length, by default 256
+    label2index : Dict[str, int], optional
+        Mapping that converts labels to indices, by default None
+
+    Returns
+    -------
+    Tuple[DataLoader, DataLoader]
+        Train and eval dataloaders
+
+    Raises
+    ------
+    Exception
+        Unsupported task
+    """
+    if task == "yelp2":
         dataset = load_dataset("yelp_polarity")
-    elif task == "yelp-5":
+    elif task == "yelp5":
         data = pd.read_json("data/yelp_reviews.json", lines=True)
         data["label"] = data["stars"] - 1
         train, val = train_test_split(
@@ -122,7 +187,7 @@ def create_dataloaders(
             "test": val.to_dict("records"),
         }
     else:
-        raise Exception(f"Unsupported task: {task} VS. yelp")
+        raise Exception(f"Unsupported task: {task} VS. {{yelp2, yelp5}}")
 
     train_dataset = DummyDataset(
         dataset["train"],

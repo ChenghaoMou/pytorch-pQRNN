@@ -1,56 +1,51 @@
-import os
-
+import click
 import pytorch_lightning as pl
 import torch
-import typer
 from dataset import create_dataloaders
 from model import PQRNN
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import (
-    EarlyStopping,
-    ModelCheckpoint,
-    model_checkpoint,
-)
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from rich.console import Console
-from typer import Typer
 
-app = Typer()
 console = Console()
 
 
-@app.command()
+@click.command()
+@click.option(
+    "--task",
+    type=click.Choice(["yelp2", "yelp5"], case_sensitive=False),
+    default="yelp5",
+    show_default=True,
+)
+# @click.option('--model_type', type=click.Choice(['pRQNN'], case_sensitive=False, default="pQRNN"))
+@click.option("--b", type=int, default=128, show_default=True)
+@click.option("--d", type=int, default=96, show_default=True)
+@click.option("--num_layers", type=int, default=2, show_default=True)
+@click.option("--batch_size", type=int, default=512, show_default=True)
+@click.option("--dropout", type=float, default=0.5, show_default=True)
+@click.option("--lr", type=float, default=1e-3, show_default=True)
+@click.option(
+    "--rnn_type",
+    type=click.Choice(["LSTM", "GRU", "QRNN"], case_sensitive=False),
+    default="GRU",
+    show_default=True,
+)
 def train(
-    task: str = typer.Option(
-        "yelp",
-        allow_dash=True,
-        help="Task to train the model with, currently support `yelp`(yelp polarity) and `yelp-5` tasks",
-    ),
-    model_type: str = typer.Option(
-        "pQRNN",
-        allow_dash=True,
-        help="Model architecture to use, currently support `pQRNN`",
-    ),
-    b: int = typer.Option(
-        256, allow_dash=True, help="Feature size B from the paper"
-    ),
-    d: int = typer.Option(
-        64, allow_dash=True, help="d dimention from the paper"
-    ),
-    num_layers: int = typer.Option(
-        4, allow_dash=True, help="Number of layers for QRNN"
-    ),
-    batch_size: int = typer.Option(512, help="Batch size for the dataloader"),
-    dropout: float = typer.Option(0.5, allow_dash=True, help="Dropout rate"),
-    lr: float = typer.Option(1e-3, allow_dash=True, help="Learning rate"),
+    task: str,
+    b: int,
+    d: int,
+    num_layers: int,
+    batch_size: int,
+    dropout: float,
+    lr: float,
+    rnn_type: str,
 ):
 
     train_dataloader, dev_dataloader = create_dataloaders(
-        task,
-        batch_size=batch_size,
-        feature_size=b * 2,
-        label2index=None,
+        task, batch_size=batch_size, feature_size=b * 2, label2index=None,
     )
-    num_classes = 2 if task == "yelp" else 5 if task == "yelp-5" else 2
+    num_classes = {"yelp2": 2, "yelp5": 5,}.get(task, 2)
+
     model = PQRNN(
         b=b,
         d=d,
@@ -58,11 +53,12 @@ def train(
         num_layers=num_layers,
         dropout=dropout,
         output_size=num_classes,
+        rnn_type=rnn_type,
     )
 
     trainer = pl.Trainer(
         logger=pl_loggers.TensorBoardLogger("lightning_logs", log_graph=False),
-        early_stop_callback=EarlyStopping(monitor="val_loss", patience=5),
+        callbacks=[EarlyStopping(monitor="val_loss", patience=5)],
         checkpoint_callback=ModelCheckpoint(
             "./checkpoints/", monitor="val_loss"
         ),
@@ -77,4 +73,4 @@ def train(
 
 if __name__ == "__main__":
 
-    app()
+    train()
