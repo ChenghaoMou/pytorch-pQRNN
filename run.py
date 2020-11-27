@@ -13,7 +13,7 @@ console = Console()
 @click.command()
 @click.option(
     "--task",
-    type=click.Choice(["yelp2", "yelp5"], case_sensitive=False),
+    type=click.Choice(["yelp2", "yelp5", "toxic"], case_sensitive=False),
     default="yelp5",
     show_default=True,
 )
@@ -44,7 +44,7 @@ def train(
     train_dataloader, dev_dataloader = create_dataloaders(
         task, batch_size=batch_size, feature_size=b * 2, label2index=None,
     )
-    num_classes = {"yelp2": 2, "yelp5": 5,}.get(task, 2)
+    num_classes = {"yelp2": 2, "yelp5": 5, "toxic": 6}.get(task, 2)
 
     model = PQRNN(
         b=b,
@@ -54,6 +54,7 @@ def train(
         dropout=dropout,
         output_size=num_classes,
         rnn_type=rnn_type,
+        multilabel=task == "toxic",
     )
 
     trainer = pl.Trainer(

@@ -186,6 +186,43 @@ def create_dataloaders(
             "train": train.to_dict("records"),
             "test": val.to_dict("records"),
         }
+    elif task == "toxic":
+        train = pd.read_csv("data/train.csv")
+        labels = pd.read_csv("data/test_labels.csv")
+        test = pd.read_csv("data/test.csv")
+        labels["id"] = labels["id"].astype(str)
+        test["id"] = test["id"].astype(str)
+        test = test.merge(labels)
+        test = test[test["toxic"] != -1]
+
+        train["text"] = train["comment_text"]
+        train["label"] = train[
+            [
+                "toxic",
+                "severe_toxic",
+                "obscene",
+                "threat",
+                "insult",
+                "identity_hate",
+            ]
+        ].values.tolist()
+
+        test["text"] = test["comment_text"]
+        test["label"] = test[
+            [
+                "toxic",
+                "severe_toxic",
+                "obscene",
+                "threat",
+                "insult",
+                "identity_hate",
+            ]
+        ].values.tolist()
+
+        dataset = {
+            "train": train[["text", "label"]].to_dict("records"),
+            "test": test[["text", "label"]].to_dict("records"),
+        }
     else:
         raise Exception(f"Unsupported task: {task} VS. {{yelp2, yelp5}}")
 

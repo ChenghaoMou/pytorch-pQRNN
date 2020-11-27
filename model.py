@@ -5,11 +5,15 @@ from functools import partial
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
+    import numpy as np
     import pytorch_lightning as pl
     import torch
     import torch.nn as nn
     from pytorch_lightning.metrics.functional import f1 as f1_score
-    from pytorch_lightning.metrics.functional.classification import accuracy
+    from pytorch_lightning.metrics.functional.classification import (
+        accuracy,
+        auroc,
+    )
     from torch.optim.lr_scheduler import ReduceLROnPlateau
 
     try:
@@ -208,6 +212,7 @@ class PQRNN(pl.LightningModule):
         lr: float = 0.025,
         dropout: float = 0.5,
         rnn_type: str = "LSTM",
+        multilabel: bool = False,
     ):
         super().__init__()
         if fc_sizes is None:
@@ -221,6 +226,7 @@ class PQRNN(pl.LightningModule):
             "output_size": output_size,
             "dropout": dropout,
             "rnn_type": rnn_type.upper(),
+            "multilabel": multilabel,
         }
 
         layers: List[nn.Module] = []
@@ -237,7 +243,11 @@ class PQRNN(pl.LightningModule):
             b, d, num_layers=num_layers, dropout=dropout
         )
         self.output = nn.ModuleList(layers)
-        self.loss = nn.CrossEntropyLoss()
+        self.loss = (
+            nn.CrossEntropyLoss()
+            if not self.hparams["multilabel"]
+            else nn.BCEWithLogitsLoss()
+        )
 
     def forward(self, projection):
         features = self.tanh(projection)
@@ -257,8 +267,11 @@ class PQRNN(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         projection, _, labels = batch
         logits = self.forward(projection)
-        self.log("loss", self.loss(logits, labels).detach().cpu().item())
-        return {"loss": self.loss(logits, labels)}
+        self.log(
+            "loss",
+            self.loss(logits, labels.type(logits.dtype)).detach().cpu().item(),
+        )
+        return {"loss": self.loss(logits, labels.type(logits.dtype))}
 
     def validation_step(self, batch, batch_idx):
         projection, _, labels = batch
@@ -270,27 +283,42 @@ class PQRNN(pl.LightningModule):
 
         logits = torch.cat([o["logits"] for o in outputs], dim=0)
         labels = torch.cat([o["labels"] for o in outputs], dim=0)
-        self.log(
-            "val_f1",
-            f1_score(
-                torch.argmax(logits, dim=1),
-                labels,
-                num_classes=self.hparams["output_size"],
-                average="macro",
+        if self.hparams["multilabel"]:
+            self.log(
+                "val_auroc",
+                np.mean(
+                    [
+                        auroc(logits[:, i], labels[:, i]).detach().cpu().item()
+                        for i in range(logits.shape[1])
+                    ]
+                ),
+                prog_bar=True,
             )
-            .detach()
-            .cpu()
-            .item(),
-            prog_bar=True,
-        )
-        self.log(
-            "val_acc",
-            accuracy(torch.argmax(logits, dim=1), labels).detach().cpu().item(),
-            prog_bar=True,
-        )
+        else:
+            self.log(
+                "val_f1",
+                f1_score(
+                    torch.argmax(logits, dim=1),
+                    labels,
+                    num_classes=self.hparams["output_size"],
+                    average="macro",
+                )
+                .detach()
+                .cpu()
+                .item(),
+                prog_bar=True,
+            )
+            self.log(
+                "val_acc",
+                accuracy(torch.argmax(logits, dim=1), labels)
+                .detach()
+                .cpu()
+                .item(),
+                prog_bar=True,
+            )
         self.log(
             "val_loss",
-            self.loss(logits, labels).detach().cpu().item(),
+            self.loss(logits, labels.type(logits.dtype)).detach().cpu().item(),
             prog_bar=True,
         )
 
