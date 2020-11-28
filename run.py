@@ -30,6 +30,7 @@ console = Console()
     default="GRU",
     show_default=True,
 )
+@click.option("--data_path", type=str, default="data")
 def train(
     task: str,
     b: int,
@@ -39,10 +40,15 @@ def train(
     dropout: float,
     lr: float,
     rnn_type: str,
+    data_path: str,
 ):
 
     train_dataloader, dev_dataloader = create_dataloaders(
-        task, batch_size=batch_size, feature_size=b * 2, label2index=None,
+        task,
+        batch_size=batch_size,
+        feature_size=b * 2,
+        label2index=None,
+        data_path=data_path,
     )
     num_classes = {"yelp2": 2, "yelp5": 5, "toxic": 6}.get(task, 2)
 

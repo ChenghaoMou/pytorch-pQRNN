@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Tuple, Union
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import regex as re
@@ -144,6 +146,7 @@ def create_dataloaders(
     add_bos_tag: bool = True,
     max_seq_len: int = 256,
     label2index: Dict[str, int] = None,
+    data_path: str = "data",
 ) -> Tuple[DataLoader, DataLoader]:
     """Create train and eval dataloaders.
 
@@ -163,6 +166,8 @@ def create_dataloaders(
         Maximum sequence length, by default 256
     label2index : Dict[str, int], optional
         Mapping that converts labels to indices, by default None
+    data_path: str, optional
+        Path to the data files
 
     Returns
     -------
@@ -174,10 +179,13 @@ def create_dataloaders(
     Exception
         Unsupported task
     """
+
+    data_path = Path(data_path)
+
     if task == "yelp2":
         dataset = load_dataset("yelp_polarity")
     elif task == "yelp5":
-        data = pd.read_json("data/yelp_reviews.json", lines=True)
+        data = pd.read_json(data_path / "yelp_reviews.json", lines=True)
         data["label"] = data["stars"] - 1
         train, val = train_test_split(
             data, test_size=0.1, stratify=data["label"]
@@ -187,9 +195,9 @@ def create_dataloaders(
             "test": val.to_dict("records"),
         }
     elif task == "toxic":
-        train = pd.read_csv("data/train.csv")
-        labels = pd.read_csv("data/test_labels.csv")
-        test = pd.read_csv("data/test.csv")
+        train = pd.read_csv(data_path / "train.csv")
+        labels = pd.read_csv(data_path / "test_labels.csv")
+        test = pd.read_csv(data_path / "test.csv")
         labels["id"] = labels["id"].astype(str)
         test["id"] = test["id"].astype(str)
         test = test.merge(labels)
