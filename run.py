@@ -17,7 +17,6 @@ console = Console()
     default="yelp5",
     show_default=True,
 )
-# @click.option('--model_type', type=click.Choice(['pRQNN'], case_sensitive=False, default="pQRNN"))
 @click.option("--b", type=int, default=128, show_default=True)
 @click.option("--d", type=int, default=96, show_default=True)
 @click.option("--num_layers", type=int, default=2, show_default=True)

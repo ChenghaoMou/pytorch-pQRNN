@@ -146,7 +146,7 @@ def create_dataloaders(
     add_bos_tag: bool = True,
     max_seq_len: int = 256,
     label2index: Dict[str, int] = None,
-    data_path: str = "data",
+    data_path: Union[str, Path] = "data",
 ) -> Tuple[DataLoader, DataLoader]:
     """Create train and eval dataloaders.
 

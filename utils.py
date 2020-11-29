@@ -36,7 +36,7 @@ def murmurhash(token: str, feature_size: int = 512):
         hash_codes.append(hash_low)
         hash_codes.append(hash_high)
 
-    projection = []
+    projection: List[int] = []
     for code in hash_codes:
         while code:
             if len(projection) >= feature_size // 2:
