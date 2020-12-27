@@ -187,6 +187,7 @@ def create_dataloaders(
     elif task == "yelp5":
         data = pd.read_json(data_path / "yelp_reviews.json", lines=True)
         data["label"] = data["stars"] - 1
+        data["label"] = data["label"].astype(int)
         train, val = train_test_split(
             data, test_size=0.1, stratify=data["label"]
         )

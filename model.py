@@ -90,9 +90,24 @@ class PQRNN(pl.LightningModule):
         logits = self.forward(projection)
         self.log(
             "loss",
-            self.loss(logits, labels.type(logits.dtype)).detach().cpu().item(),
+            self.loss(
+                logits,
+                labels.type(
+                    logits.dtype if self.hparams["multilabel"] else labels.dtype
+                ),
+            )
+            .detach()
+            .cpu()
+            .item(),
         )
-        return {"loss": self.loss(logits, labels.type(logits.dtype))}
+        return {
+            "loss": self.loss(
+                logits,
+                labels.type(
+                    logits.dtype if self.hparams["multilabel"] else labels.dtype
+                ),
+            )
+        }
 
     def validation_step(self, batch, batch_idx):
         projection, _, labels = batch
@@ -139,7 +154,15 @@ class PQRNN(pl.LightningModule):
             )
         self.log(
             "val_loss",
-            self.loss(logits, labels.type(logits.dtype)).detach().cpu().item(),
+            self.loss(
+                logits,
+                labels.type(
+                    logits.dtype if self.hparams["multilabel"] else labels.dtype
+                ),
+            )
+            .detach()
+            .cpu()
+            .item(),
             prog_bar=True,
         )
 
