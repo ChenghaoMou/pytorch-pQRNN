@@ -23,9 +23,12 @@ console = Console()
 @click.option("--batch_size", type=int, default=512, show_default=True)
 @click.option("--dropout", type=float, default=0.5, show_default=True)
 @click.option("--lr", type=float, default=1e-3, show_default=True)
+@click.option("--nhead", type=int, default=4, show_default=True)
 @click.option(
     "--rnn_type",
-    type=click.Choice(["LSTM", "GRU", "QRNN"], case_sensitive=False),
+    type=click.Choice(
+        ["LSTM", "GRU", "QRNN", "Transformer"], case_sensitive=False
+    ),
     default="GRU",
     show_default=True,
 )
@@ -38,6 +41,7 @@ def train(
     batch_size: int,
     dropout: float,
     lr: float,
+    nhead: int,
     rnn_type: str,
     data_path: str,
 ):
@@ -60,6 +64,7 @@ def train(
         output_size=num_classes,
         rnn_type=rnn_type,
         multilabel=task == "toxic",
+        nhead=nhead,
     )
 
     trainer = pl.Trainer(

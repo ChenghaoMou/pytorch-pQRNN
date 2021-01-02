@@ -18,15 +18,18 @@ pip install -r requirements.txt
 Usage: run.py [OPTIONS]
 
 Options:
-  --task [yelp2|yelp5|toxic]  [default: yelp5]
-  --b INTEGER                 [default: 128]
-  --d INTEGER                 [default: 96]
-  --num_layers INTEGER        [default: 2]
-  --batch_size INTEGER        [default: 512]
-  --dropout FLOAT             [default: 0.5]
-  --lr FLOAT                  [default: 0.001]
-  --rnn_type [LSTM|GRU|QRNN]  [default: GRU]
-  --help                      Show this message and exit.
+  --task [yelp2|yelp5|toxic]      [default: yelp5]
+  --b INTEGER                     [default: 128]
+  --d INTEGER                     [default: 96]
+  --num_layers INTEGER            [default: 2]
+  --batch_size INTEGER            [default: 512]
+  --dropout FLOAT                 [default: 0.5]
+  --lr FLOAT                      [default: 0.001]
+  --nhead INTEGER                 [default: 4]
+  --rnn_type [LSTM|GRU|QRNN|Transformer]
+                                  [default: GRU]
+  --data_path TEXT
+  --help                          Show this message and exit.
 ```
 
 Datasets
@@ -38,17 +41,17 @@ Datasets
 
 ### Example: Yelp Polarity
 
-    python -W ignore run.py --task yelp2 --b 128 --d 64 --num-layers 4
+    python -W ignore run.py --task yelp2 --b 128 --d 64 --num_layers 4
 
 ## Benchmarks(not optimized)
 
-| Model                    | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) |                    Command                    |
-| ------------------------ | :--------: | :------------------------: | :---------------: | :-------------------------: | :-------------------------------------------: |
-| PQRNN (this repo)        |     78K    |             6.3            |       70.4\*      |             TODO            | --b 128 --d 64 --num-layers 4 --rnn_type QRNN |
-| PRNN (this repo)         |     90K    |             5.5            |        TODO       |            95.57            |  --b 128 --d 64 --num_layers 1 --rnn_type GRU |
-| PTransformer (this repo) |    TODO    |            TODO            |        TODO       |             TODO            |                                               |
-| PRADO\*\*\*              |    175K    |                            |        65.9       |             TODO            |                                               |
-| BERT                     |    335M    |            1.81            |       70.58       |          98.856\*\*         |                                               |
+| Model                    | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) |                             Command                            |
+| ------------------------ | :--------: | :------------------------: | :---------------: | :-------------------------: | :------------------------------------------------------------: |
+| PQRNN (this repo)        |     78K    |             6.3            |       70.4\*      |             TODO            |          --b 128 --d 64 --num_layers 4 --rnn_type QRNN         |
+| PRNN (this repo)         |     90K    |             5.5            |        TODO       |            95.57            |          --b 128 --d 64 --num_layers 1 --rnn_type GRU          |
+| PTransformer (this repo) |    1.2M    |            TODO            |        TODO       |             TODO            | --b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2 |
+| PRADO\*\*\*              |    175K    |                            |        65.9       |             TODO            |                                                                |
+| BERT                     |    335M    |            1.81            |       70.58       |          98.856\*\*         |                                                                |
 
 -   \* tested on 10% of the data
 -   \*\* top 1 kaggle submission
