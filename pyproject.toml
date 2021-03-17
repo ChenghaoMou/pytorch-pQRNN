@@ -36,7 +36,7 @@ python = "^3.7"
 importlib_metadata = {version = "^1.6.0", python = "<3.8"}
 typer = {extras = ["all"], version = "^0.3.2"}
 rich = "^8.0.0"
-torch = "^1.6.0"
+torch = "1.7.1"
 bitstring = "^3.1.7"
 pytorch-lightning = "^0.10.0"
 nltk = "^3.5"

@@ -47,7 +47,7 @@ stevedore==3.3.0
 tensorboard-plugin-wit==1.8.0
 tensorboard==2.4.1
 threadpoolctl==2.1.0
-torch==1.8.0
+torch==1.7.1
 tqdm==4.59.0
 typer==0.3.2
 typing-extensions==3.7.4.3
