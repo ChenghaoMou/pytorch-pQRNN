@@ -46,6 +46,7 @@ pyhash = "^0.9.3"
 scikit-learn = "^0.23.2"
 bandit = "^1.7.0"
 mmh3 = "^2.5.1"
+datasets = "^1.4.1"
 
 [tool.poetry.dev-dependencies]
 darglint = "^1.5.4"
