@@ -6,7 +6,7 @@
 
 ## Environment
 
-\* Please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn` first if you want to use QRNN. Because of the cuda-specific implementation of QRNN, pQRNN model cannot run on a CPU-only machine.
+\* Please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn` first if you want to use QRNN. Because of the cuda-specific implementation of QRNN, pQRNN model cannot run on a CPU-only machine. Note because recent pytorch change (>=1.7), I can no longer run that model without messing the environment. See <https://github.com/salesforce/pytorch-qrnn/issues/29> for details.
 
 ```bash
 pip install -r requirements.txt
@@ -44,13 +44,13 @@ Datasets
 
 ## Benchmarks(not optimized)
 
-| Model                    | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) |                              Command                             |
-| ------------------------ | :--------: | :------------------------: | :---------------: | :-------------------------: | :--------------------------------------------------------------: |
-| PQRNN (this repo)        |     78K    |             6.3            |        70.4       |             TODO            |          `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`         |
-| PRNN (this repo)         |     90K    |             5.5            |      **70.7**     |            95.57            |          `--b 128 --d 64 --num_layers 1 --rnn_type GRU`          |
-| PTransformer (this repo) |    1.2M    |            TODO            |        TODO       |             TODO            | `--b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2` |
-| PRADO<sup>1</sup>        |    175K    |                            |        65.9       |             TODO            |                                                                  |
-| BERT                     |    335M    |          **1.81**          |       70.58       |    **98.856**<sup>2</sup>   |                                                                  |
+| Model                    | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) | Command                                                          |
+| ------------------------ | ---------- | -------------------------- | ----------------- | --------------------------- | ---------------------------------------------------------------- |
+| ~~PQRNN (this repo)~~    | ~~78K~~    | ~~6.3~~                    | ~~70.4~~          | ~~TODO~~                    | `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`                  |
+| PRNN (this repo)         | 90K        | 5.5                        | **70.7**          | 95.57                       | `--b 128 --d 64 --num_layers 1 --rnn_type GRU`                   |
+| PTransformer (this repo) | 617K       | TODO                       | TODO              | TODO                        | `--b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2` |
+| PRADO<sup>1</sup>        | 175K       |                            | 65.9              |                             |                                                                  |
+| BERT                     | 335M       | **1.81**                   | 70.58             | **98.856**<sup>2</sup>      |                                                                  |
 
 1.  [Paper](https://www.aclweb.org/anthology/D19-1506.pdf)
 2.  Best Kaggle Submission
