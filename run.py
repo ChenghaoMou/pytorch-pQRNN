@@ -69,10 +69,11 @@ def train(
 
     trainer = pl.Trainer(
         logger=pl_loggers.TensorBoardLogger("lightning_logs", log_graph=False),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=5)],
+        callbacks=[EarlyStopping(monitor="val_loss", patience=10)],
         checkpoint_callback=ModelCheckpoint(
             "./checkpoints/", monitor="val_loss"
         ),
+        min_epochs=2,
         deterministic=True,
         val_check_interval=0.2,
         gpus=[0] if torch.cuda.is_available() else None,

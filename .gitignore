@@ -134,3 +134,4 @@ dmypy.json
 .vscode
 *ckpt
 data/*
+grid.yaml
