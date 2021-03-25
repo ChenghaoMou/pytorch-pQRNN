@@ -4,15 +4,15 @@
 <a href="https://github.com/ChenghaoMou/pytorch-pQRNN"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://github.com/psf/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 </center>
 
-## Environment
+## Note
 
-Note: Because of recent pytorch change (>=1.7), it is not possible to run a QRNN layer without messing up the environment. See <https://github.com/salesforce/pytorch-qrnn/issues/29> for details.
+Because of [this issue](https://github.com/salesforce/pytorch-qrnn/issues/29), [QRNN](https://github.com/salesforce/pytorch-qrnn) is not supported with `torch >= 1.7`. If you want to use a QRNN layer with this repo, please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn` first with  downgraded `torch <= 1.4`. Otherwise, you can directly run 
 
-```bash
+```
 pip install -r requirements.txt
 ```
 
-If you want to use a QRNN layer, please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn` first with  downgraded `torch <= 1.4`. 
+to set up the env.
 
 ## Usage
 
@@ -48,12 +48,12 @@ Datasets
 
 | Model                    | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) | Command                                                          |
 | ------------------------ | ---------- | -------------------------- | ----------------- | --------------------------- | ---------------------------------------------------------------- |
-| ~~PQRNN (this repo)~~    | ~~78K~~    | ~~6.3~~                    | ~~70.4~~          | ~~TODO~~                    | `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`                  |
+| ~~PQRNN (this repo)~~<sup>0</sup>    | ~~78K~~    | ~~6.3~~                    | ~~70.4~~          | ~~TODO~~                    | `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`                  |
 | PRNN (this repo)         | 90K        | 5.5                        | **70.7**          | 95.57                       | `--b 128 --d 64 --num_layers 1 --rnn_type GRU`                   |
 | PTransformer (this repo) | 617K       | 10.8                       | 68              | 86.5                        | `--b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2` |
 | PRADO<sup>1</sup>        | 175K       |                            | 65.9              |                             |                                                                  |
 | BERT                     | 335M       | **1.81**                   | 70.58             | **98.856**<sup>2</sup>      |                                                                  |
-
+0.  Not supported with `torch >= 1.7`
 1.  [Paper](https://www.aclweb.org/anthology/D19-1506.pdf)
 2.  Best Kaggle Submission
 
