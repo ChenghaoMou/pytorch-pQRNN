@@ -7,10 +7,10 @@ import pandas as pd
 import regex as re
 import torch
 from datasets import load_dataset
+from pytorch_pqrnn.utils import murmurhash
 from rich.console import Console
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
-from utils import murmurhash
 
 REGEX0 = re.compile(r"([\p{S}\p{P}]+)")
 REGEX1 = re.compile(r" +")

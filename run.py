@@ -1,10 +1,10 @@
 import click
 import pytorch_lightning as pl
 import torch
-from dataset import create_dataloaders
-from model import PQRNN
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_pqrnn.dataset import create_dataloaders
+from pytorch_pqrnn.model import PQRNN
 from rich.console import Console
 
 console = Console()

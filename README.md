@@ -1,20 +1,55 @@
 ![banner](./banner.png)
 
-<center>
-<a href="https://github.com/ChenghaoMou/pytorch-pQRNN"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://github.com/psf/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
-</center>
+![PyPI](https://img.shields.io/pypi/v/pytorch-pqrnn?style=plastic) ![Maintenance](https://img.shields.io/maintenance/yes/2021?style=plastic) ![PyPI - License](https://img.shields.io/pypi/l/pytorch-pqrnn?style=plastic) 
+
+## Installation
+
+```bash
+# install with pypi
+pip install pytorch-pqrnn
+# or install locally with poetry
+poetry install
+```
 
 ## Environment
 
-Note: Because of recent pytorch change (>=1.7), it is not possible to run a QRNN layer without messing up the environment. See <https://github.com/salesforce/pytorch-qrnn/issues/29> for details.
-
-```bash
-pip install -r requirements.txt
-```
-
-If you want to use a QRNN layer, please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn` first with  downgraded `torch <= 1.4`. 
+Because of [this issue](https://github.com/salesforce/pytorch-qrnn/issues/29), `pytorch-qrnn` is no longer compatible with pytorch and it is also not actively maintained. If you want to use a QRNN layer in this model, you have install `pytorch-qrnn` with `torch <= 1.4` first.
 
 ## Usage
+
+```python
+from pytorch_pqrnn.dataset import create_dataloaders
+from pytorch_pqrnn.model import PQRNN
+
+model = PQRNN(
+  b=128,
+  d=96,
+  lr=1e-3,
+  num_layers=2,
+  dropout=0.5,
+  output_size=5,
+  rnn_type="GRU",
+  multilabel=False,
+  nhead=2, # used when rnn_type == "Transformer"
+)
+
+
+# Text data has to been pre-processed with DummyDataset
+dataset = {
+  "train": train[["text", "label"]].to_dict("records"),
+  "test": test[["text", "label"]].to_dict("records"),
+}
+dataset = DummyDataset(
+    dataset["train"],
+    feature_size=128 * 2,
+    add_eos_tag=True,
+    add_bos_tag=True,
+    max_seq_len=512,
+    label2index={"pos": 1, "neg": 0},
+)
+```
+
+## CLI Usage
 
 ```bash
 Usage: run.py [OPTIONS]
@@ -36,29 +71,30 @@ Options:
 
 Datasets
 
--   yelp2(polarity): it will be downloaded w/ datasets(huggingface)
--   yelp5: [json file](https://www.kaggle.com/luisfredgs/hahnn-for-document-classification?select=yelp_reviews.json) should be downloaded to into `data/`
--   toxic: [dataset](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge) should be downloaded and unzipped to into `data/`
+-   yelp2(polarity): it will be downloaded w/ huggingface/datasets automatically
+-   yelp5: [json file](https://www.kaggle.com/luisfredgs/hahnn-for-document-classification?select=yelp_reviews.json) should be downloaded to into `data_path`
+-   toxic: [dataset](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge) should be downloaded and unzipped to into `data_path`
 
 ### Example: Yelp Polarity
 
-    python -W ignore run.py --task yelp2 --b 128 --d 64 --num_layers 4
+    python -W ignore run.py --task yelp2 --b 128 --d 64 --num_layers 4 --data_path data/
 
 ## Benchmarks(not optimized)
 
-| Model                    | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) | Command                                                          |
-| ------------------------ | ---------- | -------------------------- | ----------------- | --------------------------- | ---------------------------------------------------------------- |
-| ~~PQRNN (this repo)~~    | ~~78K~~    | ~~6.3~~                    | ~~70.4~~          | ~~TODO~~                    | `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`                  |
-| PRNN (this repo)         | 90K        | 5.5                        | **70.7**          | 95.57                       | `--b 128 --d 64 --num_layers 1 --rnn_type GRU`                   |
-| PTransformer (this repo) | 617K       | 10.8                       | 68              | 86.5                        | `--b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2` |
-| PRADO<sup>1</sup>        | 175K       |                            | 65.9              |                             |                                                                  |
-| BERT                     | 335M       | **1.81**                   | 70.58             | **98.856**<sup>2</sup>      |                                                                  |
+| Model                             | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) | Command                                                          |
+| --------------------------------- | ---------- | -------------------------- | ----------------- | --------------------------- | ---------------------------------------------------------------- |
+| ~~PQRNN (this repo)~~<sup>0</sup> | ~~78K~~    | ~~6.3~~                    | ~~70.4~~          |                             | `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`                  |
+| PRNN (this repo)                  | 90K        | 5.5                        | **70.7**          | 95.57                       | `--b 128 --d 64 --num_layers 1 --rnn_type GRU`                   |
+| PTransformer (this repo)          | 617K       | 10.8                       | 68                | 86.5                        | `--b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2` |
+| PRADO<sup>1</sup>                 | 175K       |                            | 65.9              |                             |                                                                  |
+| BERT                              | 335M       | **1.81**                   | 70.58             | **98.856**<sup>2</sup>      |                                                                  |
 
+0.  Results will not be reported in the future as it is no longer compatible
 1.  [Paper](https://www.aclweb.org/anthology/D19-1506.pdf)
 2.  Best Kaggle Submission
 
 ## Credits
 
-[tensorflow](https://github.com/tensorflow/models/tree/master/research/sequence_projection/prado)
+- [original tensorflow source code for PRADO](https://github.com/tensorflow/models/tree/master/research/sequence_projection/prado)
 
-Powered by [pytorch-lightning](https://github.com/PyTorchLightning/pytorch-lightning) and [grid.ai](https://www.grid.ai/)
+- Powered by [pytorch-lightning](https://github.com/PyTorchLightning/pytorch-lightning) and [grid.ai](https://www.grid.ai/)
