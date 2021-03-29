@@ -2,6 +2,7 @@
 
 ![PyPI](https://img.shields.io/pypi/v/pytorch-pqrnn?style=plastic) ![Maintenance](https://img.shields.io/maintenance/yes/2021?style=plastic) ![PyPI - License](https://img.shields.io/pypi/l/pytorch-pqrnn?style=plastic)
 
+<<<<<<< HEAD
 ## Installation
 
 ```bash
@@ -14,6 +15,17 @@ poetry install
 ## Environment
 
 Because of [this issue](https://github.com/salesforce/pytorch-qrnn/issues/29), `pytorch-qrnn` is no longer compatible with pytorch and it is also not actively maintained. If you want to use a QRNN layer in this model, you have install `pytorch-qrnn` with `torch <= 1.4` first.
+=======
+## Note
+
+Because of [this issue](https://github.com/salesforce/pytorch-qrnn/issues/29), [QRNN](https://github.com/salesforce/pytorch-qrnn) is not supported with `torch >= 1.7`. If you want to use a QRNN layer with this repo, please follow the instructions [here](https://github.com/salesforce/pytorch-qrnn) to install `python-qrnn` first with  downgraded `torch <= 1.4`. Otherwise, you can directly run 
+
+```
+pip install -r requirements.txt
+```
+
+to set up the env.
+>>>>>>> d83b7c7e27e32583a585d93e463d7f82192622c4
 
 ## Usage
 
@@ -81,15 +93,14 @@ Datasets
 
 ## Benchmarks(not optimized)
 
-| Model                             | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) | Command                                                          |
-| --------------------------------- | ---------- | -------------------------- | ----------------- | --------------------------- | ---------------------------------------------------------------- |
-| ~~PQRNN (this repo)~~<sup>0</sup> | ~~78K~~    | ~~6.3~~                    | ~~70.4~~          |                             | `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`                  |
-| PRNN (this repo)                  | 90K        | 5.5                        | **70.7**          | 95.57                       | `--b 128 --d 64 --num_layers 1 --rnn_type GRU`                   |
-| PTransformer (this repo)          | 617K       | 10.8                       | 68                | 86.5                        | `--b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2` |
-| PRADO<sup>1</sup>                 | 175K       |                            | 65.9              |                             |                                                                  |
-| BERT                              | 335M       | **1.81**                   | 70.58             | **98.856**<sup>2</sup>      |                                                                  |
-
-0.  Results will not be reported in the future as it is no longer compatible
+| Model                    | Model Size | Yelp Polarity (error rate) | Yelp-5 (accuracy) | Civil Comments (mean auroc) | Command                                                          |
+| ------------------------ | ---------- | -------------------------- | ----------------- | --------------------------- | ---------------------------------------------------------------- |
+| ~~PQRNN (this repo)~~<sup>0</sup>    | ~~78K~~    | ~~6.3~~                    | ~~70.4~~          | ~~TODO~~                    | `--b 128 --d 64 --num_layers 4 --rnn_type QRNN`                  |
+| PRNN (this repo)         | 90K        | 5.5                        | **70.7**          | 95.57                       | `--b 128 --d 64 --num_layers 1 --rnn_type GRU`                   |
+| PTransformer (this repo) | 617K       | 10.8                       | 68              | 86.5                        | `--b 128 --d 64 --num_layers 1 --rnn_type Transformer --nhead 2` |
+| PRADO<sup>1</sup>        | 175K       |                            | 65.9              |                             |                                                                  |
+| BERT                     | 335M       | **1.81**                   | 70.58             | **98.856**<sup>2</sup>      |                                                                  |
+0.  Not supported with `torch >= 1.7`
 1.  [Paper](https://www.aclweb.org/anthology/D19-1506.pdf)
 2.  Best Kaggle Submission
 
