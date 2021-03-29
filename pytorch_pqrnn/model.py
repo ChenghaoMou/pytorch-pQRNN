@@ -15,11 +15,8 @@ with warnings.catch_warnings():
     import pytorch_lightning as pl
     import torch
     import torch.nn as nn
-    from pytorch_lightning.metrics.functional import f1_score
-    from pytorch_lightning.metrics.functional.classification import (
-        accuracy,
-        auroc,
-    )
+    from pytorch_lightning.metrics.functional import accuracy, auroc
+    from pytorch_lightning.metrics.functional import f1 as f1_score
     from torch.nn import TransformerEncoder, TransformerEncoderLayer
     from torch.optim.lr_scheduler import ReduceLROnPlateau
 
@@ -184,7 +181,14 @@ class PQRNN(pl.LightningModule):
                 "val_auroc",
                 np.mean(
                     [
-                        auroc(logits[:, i], labels[:, i]).detach().cpu().item()
+                        auroc(
+                            torch.sigmoid(logits[:, i]),
+                            labels[:, i],
+                            pos_label=1,
+                        )
+                        .detach()
+                        .cpu()
+                        .item()
                         for i in range(logits.shape[1])
                     ]
                 ),
