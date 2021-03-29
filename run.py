@@ -78,6 +78,9 @@ def train(
         val_check_interval=0.2,
         gpus=[0] if torch.cuda.is_available() else None,
         gradient_clip_val=1.0,
+        plugins="deepspeed" if torch.cuda.is_available() else None,
+        precision=16 if torch.cuda.is_available() else 32,
+        accumulate_grad_batches=2 if rnn_type == "Transformer" else 1,
     )
 
     trainer.fit(model, train_dataloader, dev_dataloader)
