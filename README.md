@@ -33,20 +33,31 @@ model = PQRNN(
   nhead=2, # used when rnn_type == "Transformer"
 )
 
+# Or load the model from your checkpoint
+# model = PQRNN.load_from_checkpoint(checkpoint_path="example.ckpt")
 
-# Text data has to been pre-processed with DummyDataset
-dataset = {
-  "train": train[["text", "label"]].to_dict("records"),
-  "test": test[["text", "label"]].to_dict("records"),
-}
+# Text data has to be pre-processed with DummyDataset
 dataset = DummyDataset(
-    dataset["train"],
+    df[["text", "label"]].to_dict("records"),
+    has_label=True,
     feature_size=128 * 2,
     add_eos_tag=True,
     add_bos_tag=True,
     max_seq_len=512,
     label2index={"pos": 1, "neg": 0},
 )
+
+# Explicit train/val loop
+# Add model.eval() when necessary
+dataloader = create_dataloaders(dataset)
+for batch in dataloader:
+  # labels could be an empty tensor if has_label is False when creating the dataset. 
+  # To change what are included in a batch, feel free to change the collate_fn function
+  # in dataset.py
+  projections, lengths, labels = batch 
+  logits = model.forward(projections)
+
+  # do your magic
 ```
 
 ## CLI Usage
