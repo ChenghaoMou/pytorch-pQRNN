@@ -1,6 +1,6 @@
 ![banner](./banner.png)
 
-![PyPI](https://img.shields.io/pypi/v/pytorch-pqrnn?style=plastic) ![Maintenance](https://img.shields.io/maintenance/yes/2021?style=plastic) ![PyPI - License](https://img.shields.io/pypi/l/pytorch-pqrnn?style=plastic)
+![PyPI](https://img.shields.io/pypi/v/pytorch-pqrnn?style=plastic) ![Maintenance](https://img.shields.io/maintenance/yes/2021?style=plastic) ![PyPI - License](https://img.shields.io/pypi/l/pytorch-pqrnn?style=plastic) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4661601.svg)](https://doi.org/10.5281/zenodo.4661601)
 
 ## Installation
 
@@ -108,3 +108,18 @@ Datasets
 - [original tensorflow source code for PRADO](https://github.com/tensorflow/models/tree/master/research/sequence_projection/prado)
 
 - Powered by [pytorch-lightning](https://github.com/PyTorchLightning/pytorch-lightning) and [grid.ai](https://www.grid.ai/)
+
+## Citation
+
+```
+@software{chenghao_mou_2021_4661601,
+  author       = {Chenghao MOU},
+  title        = {ChenghaoMou/pytorch-pQRNN: Add DOI},
+  month        = apr,
+  year         = 2021,
+  publisher    = {Zenodo},
+  version      = {0.0.3},
+  doi          = {10.5281/zenodo.4661601},
+  url          = {https://doi.org/10.5281/zenodo.4661601}
+}
+```
